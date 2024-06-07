@@ -16,7 +16,7 @@ use warnings;
 use PostgresNode;
 use TestLib;
 
-# GPDB: Effectively disable one of these tests. We cannot run
+# GPDB: Effectively disable some of these tests. We cannot run
 # PREPARE TRANSACTION in utility-mode.
 # use Test::More tests => 38;
 use Test::More tests => 36;
