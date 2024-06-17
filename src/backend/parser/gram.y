@@ -19923,8 +19923,8 @@ bare_label_keyword:
 			| COPY
 			| COST
 			| CPUSET
-			| CPU_HARD_QUOTA_LIMIT
-			| CPU_SOFT_PRIORITY
+			| CPU_MAX_PERCENT
+			| CPU_WEIGHT
 			| CREATEEXTTABLE
 			| CROSS
 			| CSV
