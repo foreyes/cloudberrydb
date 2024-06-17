@@ -19465,6 +19465,7 @@ PartitionIdentKeyword: ABORT_P
 			| INSERT
 			| INSTEAD
 			| INVOKER
+			| IO_LIMIT
 			| ISOLATION
 			| KEY
 			| LANGUAGE
@@ -20060,6 +20061,7 @@ bare_label_keyword:
 			| INTEGER
 			| INTERVAL
 			| INVOKER
+			| IO_LIMIT
 			| IS
 			| ISOLATION
 			| JOIN
