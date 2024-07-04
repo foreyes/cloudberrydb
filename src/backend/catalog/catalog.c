@@ -58,6 +58,7 @@
 
 #include "catalog/gp_configuration_history.h"
 #include "catalog/gp_id.h"
+#include "catalog/gp_resgroupmap.h"
 #include "catalog/gp_storage_server.h"
 #include "catalog/gp_storage_user_mapping.h"
 #include "catalog/gp_version_at_initdb.h"
@@ -437,6 +438,7 @@ IsSharedRelation(Oid relationId)
 		relationId == ResQueueCapabilityRelationId ||
 		relationId == ResGroupRelationId ||
 		relationId == ResGroupCapabilityRelationId ||
+		relationId == ResGroupMapRelationId ||
 		relationId == GpConfigHistoryRelationId ||
 #ifdef USE_INTERNAL_FTS
 		relationId == GpSegmentConfigRelationId ||
@@ -485,6 +487,7 @@ IsSharedRelation(Oid relationId)
 		relationId == ResGroupRsgnameIndexId ||
 		relationId == ResGroupCapabilityResgroupidIndexId ||
 		relationId == ResGroupCapabilityResgroupidResLimittypeIndexId ||
+		relationId == ResGroupMapRoleIdWarehouseIdIndexId ||
 		relationId == AuthIdRolResQueueIndexId ||
 		relationId == AuthIdRolResGroupIndexId ||
 #ifdef USE_INTERNAL_FTS

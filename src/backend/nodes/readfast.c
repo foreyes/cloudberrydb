@@ -1248,6 +1248,29 @@ _readAlterResourceGroupStmt(void)
 	READ_DONE();
 }
 
+static AssignResourceGroupStmt *
+_readAssignResourceGroupStmt(void)
+{
+	READ_LOCALS(AssignResourceGroupStmt);
+
+	READ_STRING_FIELD(rsgname);
+	READ_NODE_FIELD(role);
+	READ_STRING_FIELD(whname);
+
+	READ_DONE();
+}
+
+static UnassignResourceGroupStmt *
+_readUnassignResourceGroupStmt(void)
+{
+	READ_LOCALS(UnassignResourceGroupStmt);
+
+	READ_NODE_FIELD(role);
+	READ_STRING_FIELD(whname);
+
+	READ_DONE();
+}
+
 static CommentStmt *
 _readCommentStmt(void)
 {
@@ -2604,6 +2627,12 @@ readNodeBinary(void)
 				break;
 			case T_AlterResourceGroupStmt:
 				return_value = _readAlterResourceGroupStmt();
+				break;
+			case T_AssignResourceGroupStmt:
+				return_value = _readAssignResourceGroupStmt();
+				break;
+			case T_UnassignResourceGroupStmt:
+				return_value = _readUnassignResourceGroupStmt();
 				break;
 
 			case T_CommentStmt:

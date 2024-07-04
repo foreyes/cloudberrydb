@@ -553,6 +553,22 @@ AlterResourceGroup(AlterResourceGroupStmt *stmt)
 }
 
 /*
+ * ASSIGN RESOURCE GROUP
+ */
+void
+AssignResourceGroup(AssignResourceGroupStmt *stmt)
+{
+}
+
+/*
+ * UNASSIGN RESOURCE GROUP
+ */
+void
+UnassignResourceGroup(UnassignResourceGroupStmt *stmt)
+{
+}
+
+/*
  * Get all the capabilities of one resource group in pg_resgroupcapability.
  */
 void

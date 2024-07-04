@@ -50,6 +50,7 @@ SEGMENT_LOCAL_TABLES = [
 # entry in pg_depend immediately when an entry is created in that
 # catalog table
 DEPENDENCY_EXCLUSION = [
+    'gp_resgroupmap',
     'pg_authid',
     'pg_compression',
     'pg_conversion',

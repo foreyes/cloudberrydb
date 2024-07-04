@@ -322,6 +322,7 @@ static void check_expressions_in_partition_key(PartitionSpec *spec, core_yyscan_
 
 /* GPDB-specific commands */
 %type <node>	AlterProfileStmt AlterQueueStmt AlterResourceGroupStmt
+		AssignResourceGroupStmt UnassignResourceGroupStmt
 		CreateExternalStmt
 		CreateProfileStmt CreateQueueStmt CreateResourceGroupStmt
 		DropProfileStmt DropQueueStmt DropResourceGroupStmt
@@ -744,7 +745,7 @@ static void check_expressions_in_partition_key(PartitionSpec *spec, core_yyscan_
 /* ordinary key words in alphabetical order */
 %token <keyword> ABORT_P ABSOLUTE_P ACCESS ACTION ADD_P ADMIN AFTER
 	AGGREGATE ALL ALSO ALTER ALWAYS ANALYSE ANALYZE AND ANY ARRAY AS ASC
-	ASENSITIVE ASSERTION ASSIGNMENT ASYMMETRIC ATOMIC AT ATTACH ATTRIBUTE AUTHORIZATION
+	ASENSITIVE ASSERTION ASSIGN ASSIGNMENT ASYMMETRIC ATOMIC AT ATTACH ATTRIBUTE AUTHORIZATION
 
 	BACKWARD BEFORE BEGIN_P BETWEEN BIGINT BINARY BIT
 	BOOLEAN_P BOTH BREADTH BY
@@ -822,7 +823,7 @@ static void check_expressions_in_partition_key(PartitionSpec *spec, core_yyscan_
 	TREAT TRIGGER TRIM TRUE_P
 	TRUNCATE TRUSTED TYPE_P TYPES_P
 
-	UESCAPE UNBOUNDED UNCOMMITTED UNENCRYPTED UNION UNIQUE UNKNOWN
+	UESCAPE UNASSIGN UNBOUNDED UNCOMMITTED UNENCRYPTED UNION UNIQUE UNKNOWN
 	UNLISTEN UNLOGGED UNTIL UPDATE USER USING
 
 	VACUUM VALID VALIDATE VALIDATOR VALUE_P VALUES VARCHAR VARIADIC VARYING
@@ -980,6 +981,7 @@ static void check_expressions_in_partition_key(PartitionSpec *spec, core_yyscan_
 			%nonassoc ALSO
 			%nonassoc ALTER
 			%nonassoc ASSERTION
+			%nonassoc ASSIGN
 			%nonassoc ASSIGNMENT
 			%nonassoc BACKWARD
 			%nonassoc BEFORE
@@ -1201,6 +1203,7 @@ static void check_expressions_in_partition_key(PartitionSpec *spec, core_yyscan_
 			%nonassoc TRUNCATE
 			%nonassoc TRUSTED
 			%nonassoc TYPE_P
+			%nonassoc UNASSIGN
 			%nonassoc UNCOMMITTED
 			%nonassoc UNENCRYPTED
 			%nonassoc UNLISTEN
@@ -1419,6 +1422,7 @@ stmt:
 			| AlterUserMappingStmt
 			| AlterStorageUserMappingStmt
 			| AnalyzeStmt
+			| AssignResourceGroupStmt
 			| CallStmt
 			| CheckPointStmt
 			| ClosePortalStmt
@@ -1518,6 +1522,7 @@ stmt:
 			| SelectStmt
 			| TransactionStmt
 			| TruncateStmt
+			| UnassignResourceGroupStmt
 			| UnlistenStmt
 			| UpdateStmt
 			| VacuumStmt
@@ -12835,6 +12840,34 @@ DropWarehouseStmt: DROP WAREHOUSE name
 
 /*****************************************************************************
  *
+ *	ASSIGN and UNASSIGN RESOURCE GROUP statements
+ *
+ *****************************************************************************/
+
+AssignResourceGroupStmt:
+			ASSIGN RESOURCE GROUP_P name TO ROLE RoleSpec ON WAREHOUSE name
+				{
+					AssignResourceGroupStmt *n = makeNode(AssignResourceGroupStmt);
+					n->rsgname = $4;
+					n->role = $7;
+					n->whname = $10;
+					$$ = (Node *) n;
+				}
+		;
+
+UnassignResourceGroupStmt:
+			UNASSIGN RESOURCE GROUP_P FROM ROLE RoleSpec ON WAREHOUSE name
+				{
+					UnassignResourceGroupStmt *n = makeNode(UnassignResourceGroupStmt);
+					n->role = $6;
+					n->whname = $9;
+					$$ = (Node *) n;
+				}
+		;
+
+
+/*****************************************************************************
+ *
  * ALTER PUBLICATION name SET ( options )
  *
  * ALTER PUBLICATION name ADD TABLE table [, table2]
@@ -19357,6 +19390,7 @@ PartitionIdentKeyword: ABORT_P
 			| ALWAYS
 			| ASENSITIVE
 			| ASSERTION
+			| ASSIGN
 			| ASSIGNMENT
 			| AT
 			| ATOMIC
@@ -19581,6 +19615,7 @@ PartitionIdentKeyword: ABORT_P
 			| TRUNCATE
 			| TRUSTED
 			| TYPE_P
+			| UNASSIGN
 			| UNCOMMITTED
 			| UNENCRYPTED
 			| UNKNOWN
@@ -19760,6 +19795,7 @@ reserved_keyword:
 			| ARRAY
 			| AS
 			| ASC
+			| ASSIGN
 			| ASYMMETRIC
 			| BOTH
 			| CASE
@@ -19828,6 +19864,7 @@ reserved_keyword:
 			| TO
 			| TRAILING
 			| TRUE_P
+			| UNASSIGN
 			| UNBOUNDED
 			| UNION
 			| UNIQUE
@@ -19871,6 +19908,7 @@ bare_label_keyword:
 			| ASC
 			| ASENSITIVE
 			| ASSERTION
+			| ASSIGN
 			| ASSIGNMENT
 			| ASYMMETRIC
 			| AT
@@ -20295,6 +20333,7 @@ bare_label_keyword:
 			| TYPE_P
 			| TYPES_P
 			| UESCAPE
+			| UNASSIGN
 			| UNBOUNDED
 			| UNCOMMITTED
 			| UNENCRYPTED

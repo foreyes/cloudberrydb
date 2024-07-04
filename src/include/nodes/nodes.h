@@ -454,6 +454,8 @@ typedef enum NodeTag
 	T_CreateResourceGroupStmt,
 	T_DropResourceGroupStmt,
 	T_AlterResourceGroupStmt,
+	T_AssignResourceGroupStmt,
+	T_UnassignResourceGroupStmt,
 	T_LockStmt,
 	T_ConstraintsSetStmt,
 	T_ReindexStmt,

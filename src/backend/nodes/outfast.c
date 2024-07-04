@@ -1681,6 +1681,12 @@ _outNode(StringInfo str, void *obj)
 			case T_AlterResourceGroupStmt:
 				_outAlterResourceGroupStmt(str, obj);
 				break;
+			case T_AssignResourceGroupStmt:
+				_outAssignResourceGroupStmt(str, obj);
+				break;
+			case T_UnassignResourceGroupStmt:
+				_outUnassignResourceGroupStmt(str, obj);
+				break;
 
             case T_CommentStmt:
                 _outCommentStmt(str, obj);

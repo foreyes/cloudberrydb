@@ -81,6 +81,7 @@ CATALOG_HEADERS := \
 	pg_resgroup.h pg_resgroupcapability.h \
 	gp_configuration_history.h gp_id.h gp_distribution_policy.h gp_version_at_initdb.h \
 	gp_warehouse.h \
+	gp_resgroupmap.h \
 	pg_appendonly.h \
 	gp_fastsequence.h pg_extprotocol.h \
 	pg_attribute_encoding.h \

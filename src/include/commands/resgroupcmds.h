@@ -22,6 +22,8 @@
 extern void CreateResourceGroup(CreateResourceGroupStmt *stmt);
 extern void DropResourceGroup(DropResourceGroupStmt *stmt);
 extern void AlterResourceGroup(AlterResourceGroupStmt *stmt);
+extern void AssignResourceGroup(AssignResourceGroupStmt *stmt);
+extern void UnassignResourceGroup(UnassignResourceGroupStmt *stmt);
 
 /* catalog access function */
 extern Oid get_resgroup_oid(const char *name, bool missing_ok);

@@ -2591,6 +2591,25 @@ _equalAlterResourceGroupStmt(const AlterResourceGroupStmt *a, const AlterResourc
 	return true;
 }
 
+static bool
+_equalAssignResourceGroupStmt(const AssignResourceGroupStmt *a, const AssignResourceGroupStmt *b)
+{
+	COMPARE_STRING_FIELD(rsgname);
+	COMPARE_NODE_FIELD(role);
+	COMPARE_STRING_FIELD(whname);
+
+	return true;
+}
+
+static bool
+_equalUnassignResourceGroupStmt(const UnassignResourceGroupStmt *a, const UnassignResourceGroupStmt *b)
+{
+	COMPARE_NODE_FIELD(role);
+	COMPARE_STRING_FIELD(whname);
+
+	return true;
+}
+
 /*
  * stuff from parsenodes.h
  */
@@ -4142,6 +4161,12 @@ equal(const void *a, const void *b)
 			break;
 		case T_AlterResourceGroupStmt:
 			retval = _equalAlterResourceGroupStmt(a, b);
+			break;
+		case T_AssignResourceGroupStmt:
+			retval = _equalAssignResourceGroupStmt(a, b);
+			break;
+		case T_UnassignResourceGroupStmt:
+			retval = _equalUnassignResourceGroupStmt(a, b);
 			break;
 
 		case T_CreatePolicyStmt:

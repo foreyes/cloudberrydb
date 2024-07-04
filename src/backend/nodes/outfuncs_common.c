@@ -179,6 +179,25 @@ _outAlterResourceGroupStmt(StringInfo str, const AlterResourceGroupStmt *node)
 }
 
 static void
+_outAssignResourceGroupStmt(StringInfo str, const AssignResourceGroupStmt *node)
+{
+	WRITE_NODE_TYPE("ASSIGNRESOURCEGROUPSTMT");
+
+	WRITE_STRING_FIELD(rsgname);
+	WRITE_NODE_FIELD(role);
+	WRITE_STRING_FIELD(whname);
+}
+
+static void
+_outUnassignResourceGroupStmt(StringInfo str, const UnassignResourceGroupStmt *node)
+{
+	WRITE_NODE_TYPE("UNASSIGNRESOURCEGROUPSTMT");
+
+	WRITE_NODE_FIELD(role);
+	WRITE_STRING_FIELD(whname);
+}
+
+static void
 _outCreateDomainStmt(StringInfo str, const CreateDomainStmt *node)
 {
 	WRITE_NODE_TYPE("CREATEDOMAINSTMT");

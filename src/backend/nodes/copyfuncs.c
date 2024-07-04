@@ -5638,6 +5638,29 @@ _copyAlterResourceGroupStmt(const AlterResourceGroupStmt *from)
 	return newnode;
 }
 
+static AssignResourceGroupStmt *
+_copyAssignResourceGroupStmt(const AssignResourceGroupStmt *from)
+{
+	AssignResourceGroupStmt *newnode = makeNode(AssignResourceGroupStmt);
+
+	COPY_STRING_FIELD(rsgname);
+	COPY_NODE_FIELD(role);
+	COPY_STRING_FIELD(whname);
+
+	return newnode;
+}
+
+static UnassignResourceGroupStmt *
+_copyUnassignResourceGroupStmt(const UnassignResourceGroupStmt *from)
+{
+	UnassignResourceGroupStmt *newnode = makeNode(UnassignResourceGroupStmt);
+
+	COPY_NODE_FIELD(role);
+	COPY_STRING_FIELD(whname);
+
+	return newnode;
+}
+
 static TableValueExpr *
 _copyTableValueExpr(const TableValueExpr *from)
 {
@@ -6992,6 +7015,12 @@ copyObjectImpl(const void *from)
 			break;
 		case T_AlterResourceGroupStmt:
 			retval = _copyAlterResourceGroupStmt(from);
+			break;
+		case T_AssignResourceGroupStmt:
+			retval = _copyAssignResourceGroupStmt(from);
+			break;
+		case T_UnassignResourceGroupStmt:
+			retval = _copyUnassignResourceGroupStmt(from);
 			break;
 
 		case T_CreatePolicyStmt:

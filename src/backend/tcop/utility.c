@@ -255,6 +255,7 @@ ClassifyUtilityCommandAsReadOnly(Node *parsetree)
 		case T_AlterProfileStmt:
 		case T_AlterQueueStmt:
 		case T_AlterResourceGroupStmt:
+		case T_AssignResourceGroupStmt:
 		case T_CreateDirectoryTableStmt:
 		case T_CreateProfileStmt:
 		case T_CreateQueueStmt:
@@ -269,6 +270,7 @@ ClassifyUtilityCommandAsReadOnly(Node *parsetree)
 		case T_CreateExternalStmt:
 		case T_RetrieveStmt:
 		case T_CreateWarehouseStmt:
+		case T_UnassignResourceGroupStmt:
 			{
 				/* DDL is not read-only, and neither is TRUNCATE. */
 				return COMMAND_IS_NOT_READ_ONLY;
@@ -1128,6 +1130,20 @@ standard_ProcessUtility(PlannedStmt *pstmt,
 				PreventInTransactionBlock(isTopLevel, "DROP RESOURCE GROUP");
 
 			DropResourceGroup((DropResourceGroupStmt *) parsetree);
+			break;
+
+		case T_AssignResourceGroupStmt:
+			if (Gp_role == GP_ROLE_DISPATCH)
+				PreventInTransactionBlock(isTopLevel, "ASSIGN RESOURCE GROUP");
+
+			AssignResourceGroup((AssignResourceGroupStmt *) parsetree);
+			break;
+
+		case T_UnassignResourceGroupStmt:
+			if (Gp_role == GP_ROLE_DISPATCH)
+				PreventInTransactionBlock(isTopLevel, "UNASSIGN RESOURCE GROUP");
+
+			UnassignResourceGroup((UnassignResourceGroupStmt *) parsetree);
 			break;
 
 			/*
@@ -3629,6 +3645,14 @@ CreateCommandTag(Node *parsetree)
 
 		case T_AlterResourceGroupStmt:
 			tag = CMDTAG_ALTER_RESOURCE_GROUP;
+			break;
+
+		case T_AssignResourceGroupStmt:
+			tag = CMDTAG_ASSIGN_RESOURCE_GROUP;
+			break;
+
+		case T_UnassignResourceGroupStmt:
+			tag = CMDTAG_UNASSIGN_RESOURCE_GROUP;
 			break;
 
 		case T_CreateRoleStmt:

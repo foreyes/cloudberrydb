@@ -3148,6 +3148,21 @@ typedef struct AlterResourceGroupStmt
 	List	   *options;		/* List of DefElem nodes */
 } AlterResourceGroupStmt;
 
+typedef struct AssignResourceGroupStmt
+{
+	NodeTag		type;
+	char	   *rsgname;			/* resource group to assign */
+	RoleSpec   *role;			/* role to which the resource group is assigned */
+	char	   *whname;			/* warehouse where the resource group is assigned */
+} AssignResourceGroupStmt;
+
+typedef struct UnassignResourceGroupStmt
+{
+	NodeTag		type;
+	RoleSpec   *role;			/* role from which the resource group is unassigned */
+	char	   *whname;			/* warehouse where the resource group is unassigned */
+} UnassignResourceGroupStmt;
+
 /* ----------------------
  *	Create/Alter/Drop Role Statements
  *
