@@ -552,12 +552,126 @@ AlterResourceGroup(AlterResourceGroupStmt *stmt)
 	}
 }
 
+typedef struct AssignResourceGroupStmt
+{
+	NodeTag		type;
+	char	   *rsgname;		/* resource group to assign */
+	RoleSpec   *role;			/* role to which the resource group is assigned */
+	char	   *whname;			/* warehouse where the resource group is assigned */
+} AssignResourceGroupStmt;
+
 /*
  * ASSIGN RESOURCE GROUP
  */
 void
 AssignResourceGroup(AssignResourceGroupStmt *stmt)
 {
+	Relation	gp_warehouse_rel;
+	Relation	gp_resgroupmap_rel;
+	HeapTuple	tuple;
+	ScanKeyData skey[2];
+	SysScanDesc sscan;
+	Oid			roleid;
+	Oid			groupid;
+	Oid			warehouseid;
+
+	/* Permission check - only superuser can assign resource groups. */
+	if (!superuser())
+		ereport(ERROR,
+				(errcode(ERRCODE_INSUFFICIENT_PRIVILEGE),
+				 errmsg("must be superuser to assign resource groups")));
+
+	roleid = get_role_oid(stmt->role->rolname, false);
+	groupid = get_resgroup_oid(stmt->rsgname, false);
+
+	/* Search warehouse by name */
+	gp_warehouse_rel = heap_open(GpWarehouseRelationId, AccessShareLock);
+
+	ScanKeyInit(&skey[0],
+				Anum_gp_warehouse_warehouse_name,
+				BTEqualStrategyNumber, F_NAMEEQ,
+				CStringGetDatum(stmt->whname));
+
+	sscan = systable_beginscan(gp_warehouse_rel, GpWarehouseNameIndexId, true,
+							   NULL, 1, &skey[0]);
+
+	tuple = systable_getnext(sscan);
+	if (!HeapTupleIsValid(tuple))
+		ereport(ERROR,
+				(errcode(ERRCODE_UNDEFINED_OBJECT),
+				 errmsg("warehouse \"%s\" does not exist",
+						stmt->whname)));
+	
+	warehouseid = HeapTupleGetOid(tuple);
+
+	systable_endscan(sscan);
+	heap_close(gp_warehouse_rel, NoLock);
+
+	/* Update or insert catalog tuple */
+	gp_resgroupmap_rel = heap_open(GpResGroupMapRelationId, RowExclusiveLock);
+
+	ScanKeyInit(&skey[0],
+				Anum_gp_resgroupmap_roleid,
+				BTEqualStrategyNumber, F_OIDEQ,
+				ObjectIdGetDatum(roleid));
+	ScanKeyInit(&skey[1],
+				Anum_gp_resgroupmap_warehouseid,
+				BTEqualStrategyNumber, F_OIDEQ,
+				ObjectIdGetDatum(warehouseid));
+	
+	sscan = systable_beginscan(gp_resgroupmap_rel, ResGroupMapRoleIdWarehouseIdIndexId, true,
+							   NULL, 2, &key[0]);
+	
+	tuple = systable_getnext(sscan);
+	if (HeapTupleIsValid(tuple))
+	{
+		HeapTuple	newTuple;
+		Datum		values[Natts_gp_resgroupmap];
+		bool		nulls[Natts_gp_resgroupmap];
+		bool		replaces[Natts_gp_resgroupmap];
+
+		/* Update the tuple */
+		MemSet(values, 0, sizeof(values));
+		MemSet(nulls, false, sizeof(nulls));
+		MemSet(replaces, false, sizeof(replaces));
+
+		values[Anum_gp_resgroupmap_resgroupid - 1] = ObjectIdGetDatum(groupid);
+		replaces[Anum_gp_resgroupmap_resgroupid - 1] = true;
+
+		newTuple = heap_modify_tuple(tuple, RelationGetDescr(gp_resgroupmap_rel),
+									 values, nulls, replaces);
+		CatalogTupleUpdate(gp_resgroupmap_rel, &newTuple->t_self, newTuple);
+	}
+	else
+	{
+		/* Insert new tuple */
+		HeapTuple	newTuple;
+		Datum		values[Natts_gp_resgroupmap];
+		bool		nulls[Natts_gp_resgroupmap];
+
+		MemSet(values, 0, sizeof(values));
+		MemSet(nulls, false, sizeof(nulls));
+
+		values[Anum_gp_resgroupmap_roleid - 1] = ObjectIdGetDatum(roleid);
+		values[Anum_gp_resgroupmap_warehouseid - 1] = ObjectIdGetDatum(warehouseid);
+		values[Anum_gp_resgroupmap_resgroupid - 1] = ObjectIdGetDatum(groupid);
+
+		newTuple = heap_form_tuple(gp_resgroupmap_rel->rd_att, values, nulls);
+		CatalogTupleInsert(gp_resgroupmap_rel, newTuple);
+	}
+	systable_endscan(sscan);
+	heap_close(gp_resgroupmap_rel, NoLock);
+
+	/* Dispatch the statement to segments */
+	if (Gp_role == GP_ROLE_DISPATCH)
+	{
+		CdbDispatchUtilityStatement((Node *) stmt,
+									DF_CANCEL_ON_ERROR|
+									DF_WITH_SNAPSHOT|
+									DF_NEED_TWO_PHASE,
+									GetAssignedOidsForDispatch(),
+									NULL);
+	}
 }
 
 /*
@@ -566,6 +680,85 @@ AssignResourceGroup(AssignResourceGroupStmt *stmt)
 void
 UnassignResourceGroup(UnassignResourceGroupStmt *stmt)
 {
+	Relation	gp_resgroupmap_rel;
+	HeapTuple	tuple;
+	ScanKeyData skey[2];
+	SysScanDesc sscan;
+	Oid			roleid;
+	Oid			warehouseid;
+	bool		exists;
+
+	/* Permission check - only superuser can unassign resource groups. */
+	if (!superuser())
+		ereport(ERROR,
+				(errcode(ERRCODE_INSUFFICIENT_PRIVILEGE),
+				 errmsg("must be superuser to unassign resource groups")));
+
+	roleid = get_role_oid(stmt->role->rolname, false);
+
+	/* Search warehouse by name */
+	gp_warehouse_rel = heap_open(GpWarehouseRelationId, AccessShareLock);
+
+	ScanKeyInit(&skey[0],
+				Anum_gp_warehouse_warehouse_name,
+				BTEqualStrategyNumber, F_NAMEEQ,
+				CStringGetDatum(stmt->whname));
+
+	sscan = systable_beginscan(gp_warehouse_rel, GpWarehouseNameIndexId, true,
+							   NULL, 1, &skey[0]);
+
+	tuple = systable_getnext(sscan);
+	if (!HeapTupleIsValid(tuple))
+		ereport(ERROR,
+				(errcode(ERRCODE_UNDEFINED_OBJECT),
+				 errmsg("warehouse \"%s\" does not exist",
+						stmt->whname)));
+	
+	warehouseid = HeapTupleGetOid(tuple);
+
+	systable_endscan(sscan);
+	heap_close(gp_warehouse_rel, NoLock);
+
+	/* Delete the tuple if exits */
+	gp_resgroupmap_rel = heap_open(GpResGroupMapRelationId, RowExclusiveLock);
+
+	ScanKeyInit(&skey[0],
+				Anum_gp_resgroupmap_roleid,
+				BTEqualStrategyNumber, F_OIDEQ,
+				ObjectIdGetDatum(roleid));
+	ScanKeyInit(&skey[1],
+				Anum_gp_resgroupmap_warehouseid,
+				BTEqualStrategyNumber, F_OIDEQ,
+				ObjectIdGetDatum(warehouseid));
+	
+	sscan = systable_beginscan(gp_resgroupmap_rel, ResGroupMapRoleIdWarehouseIdIndexId, true,
+							   NULL, 2, &key[0]);
+	
+	tuple = systable_getnext(sscan);
+	exists = HeapTupleIsValid(tuple)
+	if (exists)
+	{
+		CatalogTupleDelete(gp_resgroupmap_rel, &tuple->t_self);
+	}
+	else
+	{
+		ereport(NOTICE,
+				(errmsg("role \"%s\" is not assigned to any resource group on warehouse \"%s\"",
+						stmt->role->rolname, stmt->whname)));
+	}
+	systable_endscan(sscan);
+	heap_close(gp_resgroupmap_rel, NoLock);
+
+	/* Dispatch the statement to segments */
+	if (Gp_role == GP_ROLE_DISPATCH && exists)
+	{
+		CdbDispatchUtilityStatement((Node *) stmt,
+									DF_CANCEL_ON_ERROR|
+									DF_WITH_SNAPSHOT|
+									DF_NEED_TWO_PHASE,
+									GetAssignedOidsForDispatch(),
+									NULL);
+	}
 }
 
 /*
