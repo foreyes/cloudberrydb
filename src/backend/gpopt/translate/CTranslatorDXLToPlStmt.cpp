@@ -5852,7 +5852,8 @@ CTranslatorDXLToPlStmt::CheckSafeTargetListForAOTables(List *target_list)
 	ForEach(lc, target_list)
 	{
 		TargetEntry *te = (TargetEntry *) lfirst(lc);
-		if (te->resorigcol != SelfItemPointerAttributeNumber &&
+		if (te->resorigcol < 0 &&
+			te->resorigcol != SelfItemPointerAttributeNumber &&
 			te->resorigcol != TableOidAttributeNumber &&
 			te->resorigcol != GpSegmentIdAttributeNumber &&
 			te->resorigcol != GpForeignServerAttributeNumber)
